@@ -29,10 +29,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django_otp.middleware.OTPVerifiedMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'budget.middleware.OTPRequiredMiddleware',  # ← à la fin
     'budget.middleware.OTPRequiredMiddleware',
 ]
 
