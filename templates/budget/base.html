@@ -43,17 +43,23 @@
         }
 
         header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+              background: var(--surface);
+              border-bottom: 1px solid var(--border);
+              padding: 0 16px;
+              height: auto;
+              min-height: 56px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 8px;
+              padding: 10px 16px;
+              position: sticky;
+              top: 0;
+              z-index: 100;
+              }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
 
         .logo {
             font-size: 15px;

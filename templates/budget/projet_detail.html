@@ -500,4 +500,52 @@ document.addEventListener('DOMContentLoaded', () => {
     {% endfor %}
 });
 </script>
+<style>
+@media (max-width: 600px) {
+    /* Header projet */
+    div[style*="justify-content:space-between"][style*="flex-wrap:wrap"] {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    div[style*="justify-content:space-between"] .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Recap : 2 colonnes sur mobile */
+    #recap-card > div:last-child {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Tableau : réduire padding */
+    table th, table td {
+        padding: 8px 6px !important;
+        font-size: 11px !important;
+    }
+    table th:first-child, table td:first-child {
+        padding-left: 10px !important;
+    }
+
+    /* Header poste : empiler les boutons */
+    [id^="poste-"] > div:first-child {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    [id^="poste-"] > div:first-child > div:last-child {
+        flex-wrap: wrap;
+    }
+
+    /* Modal plein écran sur mobile */
+    .modal {
+        max-width: 100% !important;
+        margin: 0;
+        border-radius: 14px 14px 0 0;
+    }
+    .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+}
+</style>
 {% endblock %}

@@ -15,25 +15,26 @@
 
 <div id="liste-projets" style="display:flex; flex-direction:column; gap:12px;">
     {% for projet in projets %}
-    <div class="card fade-in" id="projet-card-{{ projet.id }}" style="padding:20px 24px; display:flex; align-items:center; justify-content:space-between; transition:box-shadow 0.15s;">
-        <div style="display:flex; align-items:center; gap:16px;">
-            <div style="width:40px; height:40px; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:var(--text-muted);">
-                {{ projet.nom|first|upper }}
-            </div>
-            <div>
-                <div style="font-weight:600; font-size:15px;">{{ projet.nom }}</div>
-                <div style="color:var(--text-muted); font-size:12px; margin-top:2px;">
-                    Budget avancé : <strong style="color:var(--text);">{{ projet.budget_avance|floatformat:0 }} FCFA</strong>
-                    &nbsp;·&nbsp; Créé le {{ projet.date_creation|date:"d/m/Y" }}
-                </div>
-            </div>
+<div class="card fade-in" id="projet-card-{{ projet.id }}" 
+    style="padding:16px; display:flex; flex-direction:column; gap:12px; transition:box-shadow 0.15s;">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px; height:40px; min-width:40px; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:var(--text-muted);">
+            {{ projet.nom|first|upper }}
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <button class="btn btn-ghost btn-sm" onclick="ouvrirEdition({{ projet.id }}, '{{ projet.nom }}', {{ projet.budget_avance }})">Modifier</button>
-            <button class="btn btn-danger btn-sm" onclick="supprimerProjet({{ projet.id }}, '{{ projet.nom }}')">Supprimer</button>
-            <a href="/projet/{{ projet.id }}/" class="btn btn-primary btn-sm">Ouvrir →</a>
+        <div>
+            <div style="font-weight:600; font-size:15px;">{{ projet.nom }}</div>
+            <div style="color:var(--text-muted); font-size:12px; margin-top:2px;">
+                Budget : <strong style="color:var(--text);">{{ projet.budget_avance|floatformat:0 }} FCFA</strong>
+                · {{ projet.date_creation|date:"d/m/Y" }}
+            </div>
         </div>
     </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="ouvrirEdition({{ projet.id }}, '{{ projet.nom }}', {{ projet.budget_avance }})">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="supprimerProjet({{ projet.id }}, '{{ projet.nom }}')">Supprimer</button>
+        <a href="/projet/{{ projet.id }}/" class="btn btn-primary btn-sm" style="margin-left:auto;">Ouvrir →</a>
+    </div>
+</div>
     {% empty %}
     <div class="card" style="padding:64px 24px; text-align:center;" id="empty-state">
         <div style="font-size:32px; margin-bottom:12px;">📋</div>
