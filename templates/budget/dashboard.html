@@ -8,7 +8,7 @@
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
     <div>
         <h1 style="font-size:20px; font-weight:700;">Vos projets</h1>
-        <p style="color:var(--text-muted); font-size:13px; margin-top:2px;">{{ projets.count }} projet{{ projets.count|pluralize }}</p>
+        <p id="projet-count" style="color:var(--text-muted); font-size:13px; margin-top:2px;">{{ projets.count }} projet{{ projets.count|pluralize }}</p>
     </div>
     <button class="btn btn-primary" onclick="openModal('modal-projet')">+ Nouveau projet</button>
 </div>
@@ -122,7 +122,28 @@ function supprimerProjet(id, nom) {
             el.style.opacity = '0';
             el.style.transform = 'translateX(8px)';
             el.style.transition = 'all 0.2s ease';
-            setTimeout(() => { el.remove(); toast(`Projet "${nom}" supprimé`); }, 200);
+            setTimeout(() => {
+                el.remove();
+                toast(`Projet "${nom}" supprimé`);
+
+                const remaining = document.querySelectorAll('[id^="projet-card-"]').length;
+
+                // Compteur
+                const countEl = document.getElementById('projet-count');
+                countEl.textContent = remaining === 0 ? '0 projets'
+                    : remaining === 1 ? '1 projet'
+                    : `${remaining} projets`;
+
+                // État vide
+                if (remaining === 0) {
+                    document.getElementById('liste-projets').innerHTML = `
+                        <div class="card" style="padding:64px 24px; text-align:center;" id="empty-state">
+                            <div style="font-size:32px; margin-bottom:12px;">📋</div>
+                            <div style="font-weight:600; font-size:15px; margin-bottom:6px;">Aucun projet pour l'instant</div>
+                            <div style="color:var(--text-muted); font-size:13px;">Cliquez sur <strong>+ Nouveau projet</strong> pour commencer.</div>
+                        </div>`;
+                }
+            }, 200);
         } catch(e) {
             toast('Erreur lors de la suppression', 'error');
         }
