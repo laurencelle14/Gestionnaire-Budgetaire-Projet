@@ -262,7 +262,10 @@
             Gestionnaire Budgétaire de Projet
         </a>
         {% block header_extra %}
-        <a href="/" class="nav-back">← Tous les projets</a>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <a href="/" class="nav-back">← Tous les projets</a>
+            <a href="/logout/" class="btn btn-ghost btn-sm">Déconnexion</a>
+        </div>
         {% endblock %}
     </header>
 

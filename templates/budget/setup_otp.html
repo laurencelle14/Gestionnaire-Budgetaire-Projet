@@ -1,0 +1,35 @@
+{% extends 'budget/base.html' %}
+{% block header_extra %}{% endblock %}
+{% block content %}
+<div style="max-width:420px; margin:60px auto;">
+    <div class="card" style="padding:32px;">
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="font-size:28px; margin-bottom:8px;">⚙️</div>
+            <div style="font-size:18px; font-weight:700;">Configuration OTP</div>
+            <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+                Scannez ce QR code avec Google Authenticator ou Authy
+            </div>
+        </div>
+        <div style="text-align:center; margin-bottom:24px;">
+            <img src="{{ qr_url }}" style="width:200px; height:200px; border-radius:8px; border:1px solid var(--border);" />
+        </div>
+        {% if error %}
+        <div style="background:var(--danger-bg); color:var(--danger); padding:10px 14px; border-radius:var(--radius); font-size:13px; margin-bottom:16px;">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label>Confirmez avec le code OTP</label>
+                <input type="text" name="token" placeholder="000000" maxlength="6"
+                    style="text-align:center; font-size:24px; letter-spacing:8px;"
+                    inputmode="numeric" pattern="[0-9]*" autofocus />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;">
+                Confirmer et accéder
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

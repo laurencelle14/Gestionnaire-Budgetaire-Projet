@@ -1,0 +1,32 @@
+{% extends 'budget/base.html' %}
+{% block header_extra %}{% endblock %}
+{% block content %}
+<div style="max-width:380px; margin:60px auto;">
+    <div class="card" style="padding:32px;">
+        <div style="text-align:center; margin-bottom:28px;">
+            <div style="font-size:28px; margin-bottom:8px;">🔐</div>
+            <div style="font-size:18px; font-weight:700;">Connexion</div>
+            <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">Accès administrateur</div>
+        </div>
+        {% if error %}
+        <div style="background:var(--danger-bg); color:var(--danger); padding:10px 14px; border-radius:var(--radius); font-size:13px; margin-bottom:16px;">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label>Nom d'utilisateur</label>
+                <input type="text" name="username" autofocus autocomplete="username" />
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" name="password" autocomplete="current-password" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;">
+                Se connecter
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
