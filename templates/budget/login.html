@@ -21,7 +21,13 @@
             </div>
             <div class="field">
                 <label>Mot de passe</label>
-                <input type="password" name="password" autocomplete="current-password" />
+                <div style="position:relative;">
+                    <input type="password" name="password" id="inp-password" autocomplete="current-password"
+                    style="padding-right:40px;" />
+                    <button type="button" onclick="togglePassword()"
+                       style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; padding:0; line-height:1;"
+                       id="btn-toggle-pw">👁️</button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;">
                 Se connecter
@@ -29,4 +35,17 @@
         </form>
     </div>
 </div>
+<script>
+function togglePassword() {
+    const inp = document.getElementById('inp-password');
+    const btn = document.getElementById('btn-toggle-pw');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        inp.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
+</script>
 {% endblock %}
