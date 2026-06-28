@@ -1,0 +1,160 @@
+{% extends 'budget/base.html' %}
+
+{% block title %}Mes projets — Gestionnaire Budgétaire de Projet{% endblock %}
+
+{% block header_extra %}{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
+    <div>
+        <h1 style="font-size:20px; font-weight:700;">Vos projets</h1>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:2px;">{{ projets.count }} projet{{ projets.count|pluralize }}</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-projet')">+ Nouveau projet</button>
+</div>
+
+<div id="liste-projets" style="display:flex; flex-direction:column; gap:12px;">
+    {% for projet in projets %}
+    <div class="card fade-in" id="projet-card-{{ projet.id }}" style="padding:20px 24px; display:flex; align-items:center; justify-content:space-between; transition:box-shadow 0.15s;">
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="width:40px; height:40px; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:var(--text-muted);">
+                {{ projet.nom|first|upper }}
+            </div>
+            <div>
+                <div style="font-weight:600; font-size:15px;">{{ projet.nom }}</div>
+                <div style="color:var(--text-muted); font-size:12px; margin-top:2px;">
+                    Budget avancé : <strong style="color:var(--text);">{{ projet.budget_avance|floatformat:0 }} FCFA</strong>
+                    &nbsp;·&nbsp; Créé le {{ projet.date_creation|date:"d/m/Y" }}
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="ouvrirEdition({{ projet.id }}, '{{ projet.nom }}', {{ projet.budget_avance }})">Modifier</button>
+            <button class="btn btn-danger btn-sm" onclick="supprimerProjet({{ projet.id }}, '{{ projet.nom }}')">Supprimer</button>
+            <a href="/projet/{{ projet.id }}/" class="btn btn-primary btn-sm">Ouvrir →</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card" style="padding:64px 24px; text-align:center;" id="empty-state">
+        <div style="font-size:32px; margin-bottom:12px;">📋</div>
+        <div style="font-weight:600; font-size:15px; margin-bottom:6px;">Aucun projet pour l'instant</div>
+        <div style="color:var(--text-muted); font-size:13px;">Cliquez sur <strong>+ Nouveau projet</strong> pour commencer.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal Nouveau Projet -->
+<div class="modal-overlay" id="modal-projet" onclick="if(event.target===this)closeModal('modal-projet')">
+    <div class="modal">
+        <div class="modal-title">Nouveau projet</div>
+        <div class="field">
+            <label>Nom du projet</label>
+            <input type="text" id="inp-nom" placeholder="Ex: Rénovation Duplex ..." />
+        </div>
+        <div class="field">
+            <label>Budget avancé (FCFA)</label>
+            <input type="text" id="inp-budget" placeholder="Ex : 27.515.000"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-projet')">Annuler</button>
+            <button class="btn btn-primary" id="btn-creer-projet" onclick="creerProjet()">Créer le projet</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Projet -->
+<div class="modal-overlay" id="modal-edit-projet" onclick="if(event.target===this)closeModal('modal-edit-projet')">
+    <div class="modal">
+        <div class="modal-title">Modifier le projet</div>
+        <input type="hidden" id="edit-projet-id" />
+        <div class="field">
+            <label>Nom du projet</label>
+            <input type="text" id="edit-projet-nom" />
+        </div>
+        <div class="field">
+            <label>Budget avancé (FCFA)</label>
+            <input type="text" id="edit-projet-budget"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-projet')">Annuler</button>
+            <button class="btn btn-primary" id="btn-sauver-projet" onclick="sauverProjet()">Sauvegarder</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('inp-nom')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') creerProjet();
+});
+
+async function creerProjet() {
+    const nom = document.getElementById('inp-nom').value.trim();
+    const budget = document.getElementById('inp-budget').value.replace(/\./g, '') || 0;
+    if (!nom) { document.getElementById('inp-nom').focus(); return; }
+
+    const btn = document.getElementById('btn-creer-projet');
+    btn.innerHTML = '<span class="spinner"></span> Création...';
+    btn.disabled = true;
+
+    try {
+        const p = await api('/api/projets/', 'POST', { nom, budget_avance: budget });
+        toast(`Projet "${p.nom}" créé`);
+        closeModal('modal-projet');
+        document.getElementById('inp-nom').value = '';
+        document.getElementById('inp-budget').value = '';
+        setTimeout(() => location.href = `/projet/${p.id}/`, 400);
+    } catch(e) {
+        toast('Erreur lors de la création', 'error');
+        btn.innerHTML = 'Créer le projet';
+        btn.disabled = false;
+    }
+}
+
+function supprimerProjet(id, nom) {
+    confirmer(`Supprimer le projet "${nom}" et toutes ses données ?`, async () => {
+        try {
+            await api(`/api/projets/${id}/`, 'DELETE');
+            const el = document.getElementById(`projet-card-${id}`);
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(8px)';
+            el.style.transition = 'all 0.2s ease';
+            setTimeout(() => { el.remove(); toast(`Projet "${nom}" supprimé`); }, 200);
+        } catch(e) {
+            toast('Erreur lors de la suppression', 'error');
+        }
+    });
+}
+
+function ouvrirEdition(id, nom, budget) {
+    document.getElementById('edit-projet-id').value = id;
+    document.getElementById('edit-projet-nom').value = nom;
+    document.getElementById('edit-projet-budget').value =
+        Math.round(budget).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    openModal('modal-edit-projet');
+}
+
+async function sauverProjet() {
+    const id = document.getElementById('edit-projet-id').value;
+    const nom = document.getElementById('edit-projet-nom').value.trim();
+    const budget = document.getElementById('edit-projet-budget').value.replace(/\./g, '') || 0;
+    if (!nom) return;
+
+    const btn = document.getElementById('btn-sauver-projet');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
+    try {
+        await api(`/api/projets/${id}/`, 'PATCH', { nom, budget_avance: budget });
+        toast('Projet mis à jour');
+        closeModal('modal-edit-projet');
+        setTimeout(() => location.reload(), 500);
+    } catch(e) { toast('Erreur', 'error'); }
+    btn.innerHTML = 'Sauvegarder';
+    btn.disabled = false;
+}
+</script>
+{% endblock %}

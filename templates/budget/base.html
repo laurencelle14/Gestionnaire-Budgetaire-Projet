@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#1a1917">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Budget Projet">
+    <link rel="apple-touch-icon" href="{% static 'icon-192.png' %}">
+    <title>{% block title %}Gestionnaire Budgétaire de Projet{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg: #f5f4f1;
+            --surface: #ffffff;
+            --surface2: #fafaf8;
+            --border: #e8e6e0;
+            --text: #1a1917;
+            --text-muted: #6b6860;
+            --accent: #d4a843;
+            --accent-bg: #fdf6e3;
+            --danger: #c0392b;
+            --danger-bg: #fdf0ee;
+            --success: #27865a;
+            --success-bg: #edf7f2;
+            --radius: 10px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 8px rgba(0,0,0,0.04);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--text);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+        }
+
+        .nav-back {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s;
+        }
+        .nav-back:hover { color: var(--text); }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--text); color: white; border-color: var(--text); }
+        .btn-primary:hover { background: #2d2b28; }
+        .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+        .btn-ghost:hover { background: var(--bg); color: var(--text); }
+        .btn-danger { background: transparent; color: var(--danger); border-color: #f0c8c3; }
+        .btn-danger:hover { background: var(--danger-bg); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,14,12,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            animation: modal-in 0.18s ease;
+        }
+
+        @keyframes modal-in {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+
+        .field { margin-bottom: 14px; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .field input, .field select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface2);
+            transition: border-color 0.15s;
+            outline: none;
+        }
+        .field input:focus { border-color: var(--text); background: white; }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toast-in 0.2s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            min-width: 220px;
+        }
+        .toast-success { background: #1a1917; color: white; }
+        .toast-error { background: var(--danger); color: white; }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateX(16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toast-out {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(16px); }
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fade-in { animation: fade-in 0.2s ease; }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        .neutral { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+
+    <header>
+        <a href="/" class="logo">
+            <div class="logo-icon">G</div>
+            Gestionnaire Budgétaire de Projet
+        </a>
+        {% block header_extra %}
+        <a href="/" class="nav-back">← Tous les projets</a>
+        {% endblock %}
+    </header>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Modal Confirmation -->
+    <div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this)_confirmCancel()">
+        <div class="modal" style="max-width:380px;">
+            <div style="font-size:20px; margin-bottom:12px;">⚠️</div>
+            <div class="modal-title">Confirmer</div>
+            <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;" id="confirm-message"></div>
+            <div class="modal-actions" style="margin-top:24px;">
+                <button class="btn btn-ghost" onclick="_confirmCancel()">Annuler</button>
+                <button class="btn btn-danger" id="btn-confirm-ok" onclick="_confirmOk()">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ── Modals ─────────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // ── CSRF ───────────────────────────────────────────────────
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+        return v ? v[2] : null;
+    }
+    function getCSRF() {
+        const cookie = getCookie('csrftoken');
+        if (cookie) return cookie;
+        const el = document.querySelector('[name=csrfmiddlewaretoken]');
+        return el ? el.value : '';
+    }
+
+    // ── API ────────────────────────────────────────────────────
+    async function api(url, method = 'GET', body = null) {
+        const opts = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF()
+            }
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(url, opts);
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    }
+
+    // ── Format ─────────────────────────────────────────────────
+    function fmt(n) {
+        const num = Math.round(parseFloat(n) || 0);
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' FCFA';
+    }
+
+    // ── Toast ──────────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${msg}`;
+        document.getElementById('toast-container').appendChild(t);
+        setTimeout(() => {
+            t.style.animation = 'toast-out 0.2s ease forwards';
+            setTimeout(() => t.remove(), 200);
+        }, 2800);
+    }
+
+    // ── Confirmation ───────────────────────────────────────────
+    let _confirmCallback = null;
+
+    function confirmer(message, callback, btnLabel = 'Supprimer') {
+        document.getElementById('confirm-message').textContent = message;
+        document.getElementById('btn-confirm-ok').textContent = btnLabel;
+        _confirmCallback = callback;
+        openModal('modal-confirm');
+    }
+
+    function _confirmOk() {
+        closeModal('modal-confirm');
+        if (_confirmCallback) _confirmCallback();
+        _confirmCallback = null;
+    }
+
+    function _confirmCancel() {
+        closeModal('modal-confirm');
+        _confirmCallback = null;
+    }
+    </script>
+
+    {% block scripts %}{% endblock %}
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js');
+    }
+    </script>
+</body>
+</html>

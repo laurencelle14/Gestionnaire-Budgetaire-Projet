@@ -1,0 +1,503 @@
+{% extends 'budget/base.html' %}
+
+{% block title %}{{ projet.nom }} — Gestionnaire Budgétaire de Projet{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; gap:16px; flex-wrap:wrap;">
+    <div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">
+            <a href="/" style="color:var(--text-muted); text-decoration:none;">Projets</a> / {{ projet.nom }}
+        </div>
+        <h1 style="font-size:22px; font-weight:700;">{{ projet.nom }}</h1>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-poste')">+ Nouveau poste</button>
+</div>
+
+<!-- Récap budget -->
+<div class="card" id="recap-card" style="padding:24px; margin-bottom:24px; background:#1a1917; border-color:#1a1917;">
+    <div style="font-size:11px; font-weight:600; color:#6b6860; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:16px;">Récapitulatif budgétaire</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:20px;">
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">Budget avancé</div>
+            <div style="font-size:18px; font-weight:700; color:white;" id="r-budget-avance">—</div>
+        </div>
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">Budget estimatif travaux</div>
+            <div style="font-size:18px; font-weight:700; color:white;" id="r-budget-estimatif">—</div>
+        </div>
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">Imprévus (10%)</div>
+            <div style="font-size:18px; font-weight:700; color:#d4a843;" id="r-imprevu">—</div>
+        </div>
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">En caisse</div>
+            <div style="font-size:18px; font-weight:700; color:white;" id="r-en-caisse">—</div>
+        </div>
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">Reliquat déf.</div>
+            <div style="font-size:18px; font-weight:700; color:white;" id="r-reliquat-def">—</div>
+        </div>
+        <div>
+            <div style="font-size:11px; color:#6b6860; margin-bottom:4px;">Surplus</div>
+            <div style="font-size:18px; font-weight:700;" id="r-surplus">—</div>
+        </div>
+    </div>
+</div>
+
+<!-- Postes -->
+<div id="postes-container" style="display:flex; flex-direction:column; gap:16px;">
+    {% for poste in projet.postes.all %}
+    <div class="card fade-in" id="poste-{{ poste.id }}">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;" id="nom-poste-{{ poste.id }}">{{ poste.nom }}</div>
+            <button class="btn btn-ghost btn-sm" onclick="editerPoste({{ poste.id }}, '{{ poste.nom }}')" style="padding:3px 8px; font-size:11px;">✏️</button>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn btn-ghost btn-sm" onclick="openModal('modal-ligne'); document.getElementById('inp-ligne-poste').value={{ poste.id }}">+ Ligne</button>
+                <button class="btn btn-danger btn-sm" onclick="supprimerPoste({{ poste.id }}, '{{ poste.nom }}')">Supprimer</button>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;" id="table-{{ poste.id }}">
+                <thead>
+                    <tr style="background:var(--bg);">
+                        <th style="padding:10px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Désignation</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Devis</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Devis révu</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Avance</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Reliquat</th>
+                        <th style="padding:10px 12px; border-bottom:1px solid var(--border); width:40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-{{ poste.id }}">
+                    {% for ligne in poste.lignes.all %}
+                    <tr id="ligne-{{ ligne.id }}" style="border-bottom:1px solid var(--border); transition:background 0.1s;" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background='white'">
+                        <td style="padding:10px 16px;">
+                            <input type="text" value="{{ ligne.designation }}"
+                                style="border:none; background:transparent; font-size:13px; color:var(--text); width:100%; font-family:inherit; outline:none; padding:2px 4px; border-radius:4px; transition:background 0.15s;"
+                                onfocus="this.style.background='var(--bg)'"
+                                onblur="this.style.background='transparent'; majLigne({{ ligne.id }}, 'designation', this.value)" />
+                        </td>
+                        <td style="padding:10px 12px;">
+                            <input type="text" value="{{ ligne.devis|floatformat:0 }}"
+                                style="border:none; background:transparent; font-size:13px; color:var(--text); width:100%; text-align:right; font-family:inherit; outline:none; padding:2px 4px; border-radius:4px; transition:background 0.15s;"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')"
+                                onfocus="this.style.background='var(--bg)'"
+                                onblur="this.style.background='transparent'; majLigne({{ ligne.id }}, 'devis', this.value.replace(/\./g,''))" />
+                        </td>
+                        <td style="padding:10px 12px;">
+                            <input type="text" value="{{ ligne.devis_revu|floatformat:0 }}"
+                                style="border:none; background:transparent; font-size:13px; color:var(--text); width:100%; text-align:right; font-family:inherit; outline:none; padding:2px 4px; border-radius:4px; transition:background 0.15s;"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')"
+                                onfocus="this.style.background='var(--bg)'"
+                                onblur="this.style.background='transparent'; majLigne({{ ligne.id }}, 'devis_revu', this.value.replace(/\./g,''))" />
+                        </td>
+                        <td style="padding:10px 12px;">
+                            <input type="text" value="{{ ligne.avance|floatformat:0 }}"
+                                style="border:none; background:transparent; font-size:13px; color:var(--text); width:100%; text-align:right; font-family:inherit; outline:none; padding:2px 4px; border-radius:4px; transition:background 0.15s;"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')"
+                                onfocus="this.style.background='var(--bg)'"
+                                onblur="this.style.background='transparent'; majLigne({{ ligne.id }}, 'avance', this.value.replace(/\./g,''))" />
+                        </td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="reliquat-{{ ligne.id }}">
+                            {{ ligne.reliquat|floatformat:0 }}
+                        </td>
+                        <td style="padding:10px 12px; text-align:center;">
+                            <button onclick="supprimerLigne({{ ligne.id }}, {{ poste.id }})"
+                                style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; line-height:1; padding:2px 6px; border-radius:4px; transition:all 0.15s;"
+                                onmouseenter="this.style.color='var(--danger)'; this.style.background='var(--danger-bg)'"
+                                onmouseleave="this.style.color='var(--text-muted)'; this.style.background='none'">×</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background:var(--accent-bg);" id="total-row-{{ poste.id }}">
+                        <td style="padding:10px 16px; font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Total</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-devis-{{ poste.id }}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-drevu-{{ poste.id }}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-avance-{{ poste.id }}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:700; color:var(--success);" id="tot-reliquat-{{ poste.id }}">—</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if not poste.lignes.all %}
+        <div id="empty-{{ poste.id }}" style="padding:32px; text-align:center; color:var(--text-muted); font-size:13px;">
+            Aucune ligne. Cliquez sur <strong>+ Ligne</strong> pour commencer.
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="card" style="padding:64px 24px; text-align:center;" id="empty-state">
+        <div style="font-size:28px; margin-bottom:12px;">🏗️</div>
+        <div style="font-weight:600; margin-bottom:6px;">Aucun poste pour l'instant</div>
+        <div style="color:var(--text-muted); font-size:13px;">Cliquez sur <strong>+ Nouveau poste</strong> pour commencer.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal Nouveau Poste -->
+<div class="modal-overlay" id="modal-poste" onclick="if(event.target===this)closeModal('modal-poste')">
+    <div class="modal">
+        <div class="modal-title">Nouveau poste</div>
+        <div class="field">
+            <label>Nom du poste</label>
+            <input type="text" id="inp-poste-nom" placeholder="Ex : Peinture, Plomberie, Maçonnerie..." />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-poste')">Annuler</button>
+            <button class="btn btn-primary" id="btn-creer-poste" onclick="creerPoste()">Créer le poste</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Poste -->
+<div class="modal-overlay" id="modal-edit-poste" onclick="if(event.target===this)closeModal('modal-edit-poste')">
+    <div class="modal">
+        <div class="modal-title">Modifier le poste</div>
+        <input type="hidden" id="edit-poste-id" />
+        <div class="field">
+            <label>Nom du poste</label>
+            <input type="text" id="edit-poste-nom" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-poste')">Annuler</button>
+            <button class="btn btn-primary" id="btn-sauver-poste" onclick="sauverPoste()">Sauvegarder</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouvelle Ligne -->
+<div class="modal-overlay" id="modal-ligne" onclick="if(event.target===this)closeModal('modal-ligne')">
+    <div class="modal">
+        <div class="modal-title">Nouvelle ligne de désignation</div>
+        <input type="hidden" id="inp-ligne-poste" />
+        <div class="field">
+            <label>Désignation</label>
+            <input type="text" id="inp-ligne-desig" placeholder="Ex : Matériaux, MOD..." />
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="field">
+                <label>Devis</label>
+                <input type="text" id="inp-ligne-devis" placeholder="0"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')" />
+            </div>
+            <div class="field">
+                <label>Devis révu <span style="color:var(--text-muted); font-weight:400; font-size:11px;">(optionnel)</span></label>
+                <input type="text" id="inp-ligne-drevu" placeholder="0"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')" />
+            </div>
+        </div>
+        <div class="field">
+            <label>Avance</label>
+            <input type="text" id="inp-ligne-avance" placeholder="0"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')" />
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-ligne')">Annuler</button>
+            <button class="btn btn-primary" id="btn-creer-ligne" onclick="creerLigne()">Ajouter la ligne</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PROJET_ID = {{ projet.id }};
+
+const fmtNum = n => Math.round(parseFloat(n) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+// ── Récap ──────────────────────────────────────────────────────
+async function chargerRecap() {
+    try {
+        const d = await api(`/api/projet/${PROJET_ID}/recap/`);
+        document.getElementById('r-budget-avance').textContent = fmt(d.budget_avance);
+        document.getElementById('r-budget-estimatif').textContent = fmt(d.budget_estimatif);
+        document.getElementById('r-imprevu').textContent = fmt(d.imprevu);
+        document.getElementById('r-en-caisse').textContent = fmt(d.en_caisse);
+        document.getElementById('r-reliquat-def').textContent = fmt(d.reliquat_def);
+        const s = document.getElementById('r-surplus');
+        s.textContent = fmt(d.surplus);
+        s.style.color = parseFloat(d.surplus) >= 0 ? '#27865a' : '#c0392b';
+    } catch(e) {}
+}
+
+// ── Totaux poste ───────────────────────────────────────────────
+function recalcPoste(posteId) {
+    const tbody = document.getElementById(`tbody-${posteId}`);
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    let d = 0, dr = 0, av = 0;
+    rows.forEach(row => {
+        const inputs = row.querySelectorAll('input[type=text]');
+        // ignorer le 1er input (designation) — prendre indices 1,2,3
+        d  += parseFloat(String(inputs[1]?.value || '0').replace(/\./g,'')) || 0;
+        dr += parseFloat(String(inputs[2]?.value || '0').replace(/\./g,'')) || 0;
+        av += parseFloat(String(inputs[3]?.value || '0').replace(/\./g,'')) || 0;
+    });
+    document.getElementById(`tot-devis-${posteId}`).textContent = fmtNum(d);
+    document.getElementById(`tot-drevu-${posteId}`).textContent = fmtNum(dr);
+    document.getElementById(`tot-avance-${posteId}`).textContent = fmtNum(av);
+    document.getElementById(`tot-reliquat-${posteId}`).textContent = fmtNum(dr - av);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    chargerRecap();
+    {% for poste in projet.postes.all %}
+    recalcPoste({{ poste.id }});
+    // Formater les inputs existants
+    document.querySelectorAll('#tbody-{{ poste.id }} input[type=text]').forEach((inp, i) => {
+        if (i % 4 !== 0) { // ignorer les inputs désignation
+            const val = parseFloat(inp.value) || 0;
+            inp.value = Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+    });
+    {% endfor %}
+});
+
+// Formater les reliquats existants
+document.querySelectorAll('[id^="reliquat-"]').forEach(el => {
+    const val = parseFloat(el.textContent) || 0;
+    el.textContent = Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+});
+
+// ── Poste ──────────────────────────────────────────────────────
+document.getElementById('inp-poste-nom')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') creerPoste();
+});
+
+async function creerPoste() {
+    const nom = document.getElementById('inp-poste-nom').value.trim();
+    if (!nom) return;
+    const btn = document.getElementById('btn-creer-poste');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+    try {
+        const poste = await api('/api/postes/', 'POST', { projet_id: PROJET_ID, nom });
+        closeModal('modal-poste');
+        document.getElementById('inp-poste-nom').value = '';
+        ajouterPosteDom(poste);
+        toast(`Poste "${poste.nom}" ajouté`);
+    } catch(e) { toast('Erreur', 'error'); }
+    btn.innerHTML = 'Créer le poste';
+    btn.disabled = false;
+}
+
+function ajouterPosteDom(poste) {
+    const empty = document.getElementById('empty-state');
+    if (empty) empty.remove();
+
+    const div = document.createElement('div');
+    div.className = 'card fade-in';
+    div.id = `poste-${poste.id}`;
+    div.innerHTML = `
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">${poste.nom}</div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn btn-ghost btn-sm" onclick="openModal('modal-ligne'); document.getElementById('inp-ligne-poste').value=${poste.id}">+ Ligne</button>
+                <button class="btn btn-danger btn-sm" onclick="supprimerPoste(${poste.id}, '${poste.nom}')">Supprimer</button>
+            </div>
+        </div>
+        <div id="empty-${poste.id}" style="padding:32px; text-align:center; color:var(--text-muted); font-size:13px;">
+            Aucune ligne. Cliquez sur <strong>+ Ligne</strong> pour commencer.
+        </div>
+        <div style="overflow-x:auto; display:none;" id="table-wrap-${poste.id}">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:var(--bg);">
+                        <th style="padding:10px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Désignation</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Devis</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Devis révu</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Avance</th>
+                        <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border);">Reliquat</th>
+                        <th style="padding:10px 12px; border-bottom:1px solid var(--border); width:40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-${poste.id}"></tbody>
+                <tfoot>
+                    <tr style="background:var(--accent-bg);">
+                        <td style="padding:10px 16px; font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-devis-${poste.id}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-drevu-${poste.id}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="tot-avance-${poste.id}">—</td>
+                        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:700; color:var(--success);" id="tot-reliquat-${poste.id}">—</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    document.getElementById('postes-container').appendChild(div);
+}
+
+async function supprimerPoste(id, nom) {
+    confirmer(`Supprimer le poste "${nom}" et toutes ses lignes ?`, async () => {
+        try {
+            await api(`/api/postes/${id}/`, 'DELETE');
+            const el = document.getElementById(`poste-${id}`);
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.2s';
+            setTimeout(() => { el.remove(); chargerRecap(); }, 200);
+            toast(`Poste "${nom}" supprimé`);
+        } catch(e) { toast('Erreur', 'error'); }
+    });
+}
+
+// ── Ligne ──────────────────────────────────────────────────────
+document.getElementById('inp-ligne-desig')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') creerLigne();
+});
+
+async function creerLigne() {
+    const posteId = document.getElementById('inp-ligne-poste').value;
+    const designation = document.getElementById('inp-ligne-desig').value.trim();
+    if (!designation) return;
+    const devis = document.getElementById('inp-ligne-devis').value.replace(/\./g,'') || 0;
+    const drevu_raw = document.getElementById('inp-ligne-drevu').value.replace(/\./g,'');
+    const devis_revu = drevu_raw === '' ? devis : drevu_raw;
+    const avance = document.getElementById('inp-ligne-avance').value.replace(/\./g,'') || 0;
+
+    const btn = document.getElementById('btn-creer-ligne');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+    try {
+        const ligne = await api('/api/lignes/', 'POST', { poste_id: posteId, designation, devis, devis_revu, avance });
+        closeModal('modal-ligne');
+        ['inp-ligne-desig','inp-ligne-devis','inp-ligne-drevu','inp-ligne-avance']
+            .forEach(id => document.getElementById(id).value = '');
+        ajouterLigneDom(ligne, posteId);
+        recalcPoste(posteId);
+        chargerRecap();
+        toast('Ligne ajoutée');
+    } catch(e) { toast('Erreur', 'error'); }
+    btn.innerHTML = 'Ajouter la ligne';
+    btn.disabled = false;
+}
+
+function ajouterLigneDom(ligne, posteId) {
+    const empty = document.getElementById(`empty-${posteId}`);
+    if (empty) empty.style.display = 'none';
+    const wrap = document.getElementById(`table-wrap-${posteId}`);
+    if (wrap) wrap.style.display = 'block';
+
+    const tbody = document.getElementById(`tbody-${posteId}`);
+    const tr = document.createElement('tr');
+    tr.id = `ligne-${ligne.id}`;
+    tr.style.borderBottom = '1px solid var(--border)';
+    tr.style.transition = 'background 0.1s';
+    tr.onmouseenter = () => tr.style.background = 'var(--bg)';
+    tr.onmouseleave = () => tr.style.background = 'white';
+
+    const iStyle = 'border:none; background:transparent; font-size:13px; color:var(--text); width:100%; font-family:inherit; outline:none; padding:2px 4px; border-radius:4px; transition:background 0.15s;';
+    const iNum = iStyle + ' text-align:right;';
+
+    tr.innerHTML = `
+        <td style="padding:10px 16px;">
+            <input type="text" value="${ligne.designation}" style="${iStyle}"
+                onfocus="this.style.background='var(--bg)'"
+                onblur="this.style.background='transparent'; majLigne(${ligne.id},'designation',this.value)" />
+        </td>
+        <td style="padding:10px 12px;">
+            <input type="text" value="${fmtNum(ligne.devis)}" style="${iNum}"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.')"
+                onfocus="this.style.background='var(--bg)'"
+                onblur="this.style.background='transparent'; majLigne(${ligne.id},'devis',this.value.replace(/\\./g,''))" />
+        </td>
+        <td style="padding:10px 12px;">
+            <input type="text" value="${fmtNum(ligne.devis_revu)}" style="${iNum}"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.')"
+                onfocus="this.style.background='var(--bg)'"
+                onblur="this.style.background='transparent'; majLigne(${ligne.id},'devis_revu',this.value.replace(/\\./g,''))" />
+        </td>
+        <td style="padding:10px 12px;">
+            <input type="text" value="${fmtNum(ligne.avance)}" style="${iNum}"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.')"
+                onfocus="this.style.background='var(--bg)'"
+                onblur="this.style.background='transparent'; majLigne(${ligne.id},'avance',this.value.replace(/\\./g,''))" />
+        </td>
+        <td style="padding:10px 12px; text-align:right; font-size:13px; font-weight:600;" id="reliquat-${ligne.id}">
+            ${fmtNum(ligne.reliquat)}
+        </td>
+        <td style="padding:10px 12px; text-align:center;">
+            <button onclick="supprimerLigne(${ligne.id},${posteId})"
+                style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; line-height:1; padding:2px 6px; border-radius:4px; transition:all 0.15s;"
+                onmouseenter="this.style.color='var(--danger)'; this.style.background='var(--danger-bg)'"
+                onmouseleave="this.style.color='var(--text-muted)'; this.style.background='none'">×</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+async function majLigne(id, champ, valeur) {
+    try {
+        const body = {};
+        body[champ] = valeur;
+        const data = await api(`/api/lignes/${id}/`, 'PATCH', body);
+        if (data.reliquat !== undefined) {
+            document.getElementById(`reliquat-${id}`).textContent = fmtNum(data.reliquat);
+        }
+        const row = document.getElementById(`ligne-${id}`);
+        const posteEl = row.closest('[id^="poste-"]');
+        if (posteEl) recalcPoste(posteEl.id.replace('poste-',''));
+        chargerRecap();
+    } catch(e) {}
+}
+
+
+function editerPoste(id, nom) {
+    document.getElementById('edit-poste-id').value = id;
+    document.getElementById('edit-poste-nom').value = nom;
+    openModal('modal-edit-poste');
+}
+
+async function supprimerLigne(id, posteId) {
+    confirmer('Supprimer cette ligne ?', async () => {
+        try {
+            await api(`/api/lignes/${id}/`, 'DELETE');
+            const el = document.getElementById(`ligne-${id}`);
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.15s';
+            setTimeout(() => {
+                el.remove();
+                recalcPoste(posteId);
+                chargerRecap();
+            }, 150);
+            toast('Ligne supprimée');
+        } catch(e) { toast('Erreur', 'error'); }
+    });
+}
+
+
+async function sauverPoste() {
+    const id = document.getElementById('edit-poste-id').value;
+    const nom = document.getElementById('edit-poste-nom').value.trim();
+    if (!nom) return;
+
+    const btn = document.getElementById('btn-sauver-poste');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
+    try {
+        await api(`/api/postes/${id}/`, 'PATCH', { nom });
+        document.getElementById(`nom-poste-${id}`).textContent = nom;
+        toast('Poste mis à jour');
+        closeModal('modal-edit-poste');
+    } catch(e) { toast('Erreur', 'error'); }
+    btn.innerHTML = 'Sauvegarder';
+    btn.disabled = false;
+}
+
+// ── Init ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    chargerRecap();
+    {% for poste in projet.postes.all %}
+    recalcPoste({{ poste.id }});
+    {% endfor %}
+});
+</script>
+{% endblock %}
