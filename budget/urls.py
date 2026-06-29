@@ -19,5 +19,5 @@ urlpatterns = [
     path('api/lignes/<int:pk>/', views.api_ligne_detail, name='api_ligne_detail'),
 
     # API Récap
-    path('api/recap/<int:pk>/', views.api_recap, name='api_recap'),
+    path('api/projet/<int:pk>/recap/', views.api_recap, name='api_recap'),
 ]
