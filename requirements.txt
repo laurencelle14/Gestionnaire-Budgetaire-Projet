@@ -4,5 +4,3 @@ django-environ
 gunicorn
 whitenoise
 dj-database-url
-django-otp
-qrcode[pil]
