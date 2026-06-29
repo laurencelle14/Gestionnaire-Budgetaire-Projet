@@ -17,16 +17,21 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            # Générer et envoyer le code OTP
             code = str(random.randint(100000, 999999))
             request.session['otp_code'] = code
             request.session['otp_expiry'] = str(timezone.now() + timedelta(minutes=10))
-            send_mail(
-                subject='Votre code de connexion',
-                message=f'Votre code OTP est : {code}\n\nIl expire dans 10 minutes.',
-                from_email=None,
-                recipient_list=[user.email],
-            )
+            
+            if user.email:
+                try:
+                    send_mail(
+                        subject='Votre code de connexion',
+                        message=f'Votre code OTP est : {code}\n\nIl expire dans 10 minutes.',
+                        from_email=None,
+                        recipient_list=[user.email],
+                    )
+                except Exception:
+                    pass  # Ne pas bloquer si l'email échoue
+            
             return redirect('/verify-otp/')
         else:
             error = 'Identifiants incorrects.'
